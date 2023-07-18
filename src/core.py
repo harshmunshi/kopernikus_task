@@ -1,16 +1,18 @@
+import os
 from datetime import datetime
 from glob import glob
 from pathlib import Path
 from typing import List
-from numpy.typing import ArrayLike, NDArray
 
 import cv2
-import os
-from utils import draw_contours_on_canvas, plot_thresh, plot_duplicates
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
-from src.imaging_interview import (compare_frames_change_detection,
-                                   preprocess_image_change_detection)
+from src.imaging_interview import (
+    compare_frames_change_detection,
+    preprocess_image_change_detection,
+)
+from utils import draw_contours_on_canvas, plot_duplicates, plot_thresh
 
 
 def load_data(src: str) -> List:
@@ -37,7 +39,7 @@ def sort_images(image_list: List[str]) -> List[str]:
     """
 
     def extract_datetime(entry: str):
-        entry = entry.split("/")[-1].split(".")[0]  # Get the filename 
+        entry = entry.split("/")[-1].split(".")[0]  # Get the filename
         entry = entry[4:]  # Remove the first three characters
         try:
             # Check if the entry has the format YYYY_MM_DD__HH_MM_SS
@@ -55,6 +57,7 @@ def sort_images(image_list: List[str]) -> List[str]:
     sorted_image_list = sorted(image_list, key=extract_datetime)
     return sorted_image_list
 
+
 def compute_delta(prev_frame: NDArray, next_frame: NDArray) -> NDArray:
     """A helper function to compute the delta between two frames
 
@@ -65,19 +68,22 @@ def compute_delta(prev_frame: NDArray, next_frame: NDArray) -> NDArray:
     Returns:
         np.ndarray: delta between the two frames
     """
-    score, res_cnts, thresh = compare_frames_change_detection(prev_frame, next_frame, 500)
+    score, res_cnts, thresh = compare_frames_change_detection(
+        prev_frame, next_frame, 500
+    )
     return score, res_cnts, thresh
 
+
 def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> NDArray:
-    """A helper function to preprocess the image
-    """
+    """A helper function to preprocess the image"""
     img = cv2.resize(img, (resize_w, resize_h))
     img = preprocess_image_change_detection(img)
     return img
 
 
-
-def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool = False) -> None:
+def prune_images(
+    src: str, resize_w: int = 640, resize_h: int = 480, debug: bool = False
+) -> None:
     """Function to check for duplicates and prune them
 
     Args:
@@ -117,34 +123,34 @@ def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool
             scores.append(score)
         else:
             continue
-    
-    #plot_thresh(scores)
+
+    # plot_thresh(scores)
 
     # run a secondary for loop to check for duplicates
     for i in range(len(scores)):
         if i == 0:
             continue
-        if scores[i] == scores[i-1]:
+        if scores[i] == scores[i - 1]:
             duplicates = True
-            os.remove(image_list[i+1])
+            os.remove(image_list[i + 1])
             print(f"removed {image_list[i+1]}")
- 
-        elif abs(scores[i] - scores[i-1]) < 3000:
+
+        elif abs(scores[i] - scores[i - 1]) < 3000:
             # check if the contours are the same
-            if len(contours[i]) == len(contours[i-1]):
+            if len(contours[i]) == len(contours[i - 1]):
                 # check if the images are the same
                 try:
-                    if np.allclose(np.mean(cv2.imread(image_list[i+1])), np.mean(cv2.imread(image_list[i])), atol=2):
+                    if np.allclose(
+                        np.mean(cv2.imread(image_list[i + 1])),
+                        np.mean(cv2.imread(image_list[i])),
+                        atol=2,
+                    ):
                         duplicates = True
-                        os.remove(image_list[i+1])
+                        os.remove(image_list[i + 1])
                         print(f"removed {image_list[i+1]}")
                 except:
                     continue
 
-                    # d = plot_duplicates(image_list[i+1], image_list[i])
-                    # cv2.imshow("duplicates", d)
-                    # cv2.waitKey(0)
-                    # cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     src = "/home/harsh/Downloads/dataset-2"
