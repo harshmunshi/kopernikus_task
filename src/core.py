@@ -95,7 +95,8 @@ def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool
     scores = []
     contours = []
     thresh_all = []
-    duplicates = 0
+    duplicates = False
+    remove = []
     for i, img in enumerate(image_list):
         if img.endswith(".jpg") or img.endswith(".png"):
             print(img)
@@ -123,34 +124,18 @@ def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool
         if i == 0:
             continue
         if scores[i] == scores[i-1]:
-            duplicates += 1
-            print("Duplicate found")
-            d = plot_duplicates(image_list[i], image_list[i-1])
-            cv2.imshow("frame", d)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-        
+            duplicates = True
+            remove.append(image_list[i+1])
+ 
         elif abs(scores[i] - scores[i-1]) < 3000:
             # check if the contours are the same
-            print(len(contours[i]), len(contours[i-1]))
             if len(contours[i]) == len(contours[i-1]):
-                duplicates += 1
-                print("Duplicate found")
-                d = plot_duplicates(image_list[i], image_list[i-1])
-                cv2.imshow("frame", d)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-            
-        
+                # check if the images are the same
+                if np.allclose(np.mean(cv2.imread(image_list[i+1])), np.mean(cv2.imread(image_list[i])), atol=0.8):
+                    duplicates = True
+                    remove.append(image_list[i+1])
 
-        # if debug:
-        #     cv2.imshow("frame", frame)
-        #     cv2.waitKey(0)
-        #     cv2.destroyAllWindows()
-                #prev_frame = curr_frame
-
-
-
+    print(len(remove))
 if __name__ == "__main__":
     src = "/home/harsh/Downloads/dataset-3"
     pruned_images = prune_images(src)
