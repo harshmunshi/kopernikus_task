@@ -5,6 +5,7 @@ from typing import List
 from numpy.typing import ArrayLike, NDArray
 
 import cv2
+import os
 from utils import draw_contours_on_canvas, plot_thresh, plot_duplicates
 import numpy as np
 
@@ -76,7 +77,7 @@ def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> 
 
 
 
-def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool = True) -> None:
+def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool = False) -> None:
     """Function to check for duplicates and prune them
 
     Args:
@@ -125,23 +126,26 @@ def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool
             continue
         if scores[i] == scores[i-1]:
             duplicates = True
-            remove.append(image_list[i+1])
+            os.remove(image_list[i+1])
+            print(f"removed {image_list[i+1]}")
  
-        elif abs(scores[i] - scores[i-1]) < 1500:
+        elif abs(scores[i] - scores[i-1]) < 3000:
             # check if the contours are the same
             if len(contours[i]) == len(contours[i-1]):
                 # check if the images are the same
-                if np.allclose(thresh_all[i], thresh_all[i-1], atol=1e-05):
-                    duplicates = True
-                    remove.append(image_list[i+1])
+                try:
+                    if np.allclose(np.mean(cv2.imread(image_list[i+1])), np.mean(cv2.imread(image_list[i])), atol=2):
+                        duplicates = True
+                        os.remove(image_list[i+1])
+                        print(f"removed {image_list[i+1]}")
+                except:
+                    continue
 
-        if debug and duplicates:
-            d = plot_duplicates(image_list[i+1], image_list[i])
-            cv2.imshow("duplicates", d)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+                    # d = plot_duplicates(image_list[i+1], image_list[i])
+                    # cv2.imshow("duplicates", d)
+                    # cv2.waitKey(0)
+                    # cv2.destroyAllWindows()
 
-    print(len(remove))
 if __name__ == "__main__":
-    src = "/home/harsh/Downloads/dataset-3"
+    src = "/home/harsh/Downloads/dataset-2"
     pruned_images = prune_images(src)
