@@ -127,13 +127,19 @@ def prune_images(src: str, resize_w: int = 640, resize_h: int = 480, debug: bool
             duplicates = True
             remove.append(image_list[i+1])
  
-        elif abs(scores[i] - scores[i-1]) < 3000:
+        elif abs(scores[i] - scores[i-1]) < 1500:
             # check if the contours are the same
             if len(contours[i]) == len(contours[i-1]):
                 # check if the images are the same
-                if np.allclose(np.mean(cv2.imread(image_list[i+1])), np.mean(cv2.imread(image_list[i])), atol=0.8):
+                if np.allclose(thresh_all[i], thresh_all[i-1], atol=1e-05):
                     duplicates = True
                     remove.append(image_list[i+1])
+
+        if debug and duplicates:
+            d = plot_duplicates(image_list[i+1], image_list[i])
+            cv2.imshow("duplicates", d)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
     print(len(remove))
 if __name__ == "__main__":
