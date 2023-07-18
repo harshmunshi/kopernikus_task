@@ -82,7 +82,12 @@ def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> 
 
 
 def prune_images(
-    src: str, resize_w: int = 640, resize_h: int = 480, debug: bool = False
+    src: str,
+    resize_w: int = 640,
+    resize_h: int = 480,
+    debug: bool = False,
+    score_threshold: int = 3000,
+    image_mean_threshold: int = 2,
 ) -> None:
     """Function to check for duplicates and prune them
 
@@ -102,8 +107,8 @@ def prune_images(
     scores = []
     contours = []
     thresh_all = []
-    duplicates = False
-    remove = []
+
+    # Step 1: Process the delta between the the first frame and the subsequent frames
     for i, img in enumerate(image_list):
         if img.endswith(".jpg") or img.endswith(".png"):
             print(img)
@@ -124,9 +129,7 @@ def prune_images(
         else:
             continue
 
-    # plot_thresh(scores)
-
-    # run a secondary for loop to check for duplicates
+    # Step 2: Run a secondary loop to check the duplicates based on the delta and remove the duplicates
     for i in range(len(scores)):
         if i == 0:
             continue
@@ -135,7 +138,7 @@ def prune_images(
             os.remove(image_list[i + 1])
             print(f"removed {image_list[i+1]}")
 
-        elif abs(scores[i] - scores[i - 1]) < 3000:
+        elif abs(scores[i] - scores[i - 1]) < score_threshold:
             # check if the contours are the same
             if len(contours[i]) == len(contours[i - 1]):
                 # check if the images are the same
@@ -143,9 +146,8 @@ def prune_images(
                     if np.allclose(
                         np.mean(cv2.imread(image_list[i + 1])),
                         np.mean(cv2.imread(image_list[i])),
-                        atol=2,
+                        atol=image_mean_threshold,
                     ):
-                        duplicates = True
                         os.remove(image_list[i + 1])
                         print(f"removed {image_list[i+1]}")
                 except:
