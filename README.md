@@ -39,3 +39,9 @@ The idea to determine ideal input parameters depend on the following:
 In order to counter these issues in an automated way, we use a code `tuning_research.py`, that basically works on Kmeans clustering analysis. We do clustering analysis on each contour area (in every image) and overall contour area sum. This gives use the values for `min_area` and a `cut-off` for consideration.
 
 # Data Improvements for Unique Cases
+Fundamentally, there are some ways we can improve the data:
+
+* **Illumination Invariance**: Building an algorithm to counter illumination variance. Ideally, a CNN learns to be illumination invariant, however for rejection of similar frames we need to observe and code statistical patterns without increasing the latency.
+* **Faster Rejection Cascades**: Remove the unwanted image comparison based on camera ID or date and time.
+* **Image Embedding Search**: Use a shallow and accurate model to generate image embeddings and cluster it using libraries like FAISS for faster rejection of similar frames without looping.
+* **Working with Parking Geomtry / Geometric Priors**: If we know the areas where cars can be parked and the areas which stay (almost) empty, we can discount the effect of illumination in those regions. While training (based on the archtitecture) these can also account for resolving class imbalance issues.
