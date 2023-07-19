@@ -10,6 +10,7 @@
 # Algorithm
 ## Generic O(n^2) Algo (Slower, more accurate)
 ![Alt Text](./data/ntwoalgo.png)
+
 The high level overview of this algorithm is as follows:
 * Read the file paths of all images in a list.
 * Sort the list based on the timestamp.
