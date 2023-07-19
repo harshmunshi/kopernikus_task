@@ -8,12 +8,18 @@ import cv2
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from src.imaging_interview import (compare_frames_change_detection,
-                                   preprocess_image_change_detection)
+from src.imaging_interview import (
+    compare_frames_change_detection,
+    preprocess_image_change_detection,
+)
 from src.io_util import load_data, preprocess_image, sort_images
 from src.tuning_research import tune_parameters
-from utils import (draw_contours_on_canvas, plot_curr_prev_thresh,
-                   plot_duplicates, plot_thresh)
+from utils import (
+    draw_contours_on_canvas,
+    plot_curr_prev_thresh,
+    plot_duplicates,
+    plot_thresh,
+)
 
 
 def compute_delta(

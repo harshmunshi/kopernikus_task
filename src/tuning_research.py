@@ -12,13 +12,6 @@ from src.io_util import load_data, preprocess_image, sort_images
 from src.utils import draw_contours_on_canvas, plot_thresh
 
 
-def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> NDArray:
-    """A helper function to preprocess the image"""
-    img = cv2.resize(img, (resize_w, resize_h))
-    img = preprocess_image_change_detection(img)
-    return img
-
-
 def compare_frames_change_detection(prev_frame, next_frame, min_contour_area):
     frame_delta = cv2.absdiff(prev_frame, next_frame)
     thresh = cv2.threshold(frame_delta, 45, 255, cv2.THRESH_BINARY)[1]
