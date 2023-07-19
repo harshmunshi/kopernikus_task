@@ -4,11 +4,19 @@ import cv2
 import imutils
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 from sklearn.cluster import KMeans
 
-from src.core import load_data, preprocess_image, sort_images
 from src.imaging_interview import preprocess_image_change_detection
+from src.io_util import load_data, preprocess_image, sort_images
 from src.utils import draw_contours_on_canvas, plot_thresh
+
+
+def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> NDArray:
+    """A helper function to preprocess the image"""
+    img = cv2.resize(img, (resize_w, resize_h))
+    img = preprocess_image_change_detection(img)
+    return img
 
 
 def compare_frames_change_detection(prev_frame, next_frame, min_contour_area):
@@ -35,7 +43,6 @@ def compare_frames_change_detection(prev_frame, next_frame, min_contour_area):
 def tune_parameters(src: str, resize_w: int = 640, resize_h: int = 480) -> List:
     image_list = load_data(src)
     image_list = sort_images(image_list)
-
     # take the first image as the reference
     # and compare all the reamining images for frame difference
     prev_frame = None
@@ -67,8 +74,6 @@ def tune_parameters(src: str, resize_w: int = 640, resize_h: int = 480) -> List:
         else:
             continue
 
-    # plot the score
-    plot_thresh(countours)
     kmeans_scores = KMeans(n_clusters=3, random_state=0, n_init="auto").fit(
         np.array(scores).reshape(-1, 1)
     )
