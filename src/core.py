@@ -10,7 +10,7 @@ from numpy.typing import ArrayLike, NDArray
 
 from src.imaging_interview import (compare_frames_change_detection,
                                    preprocess_image_change_detection)
-from src.tuning_research import tune_parameters
+# from src.tuning_research import tune_parameters
 from utils import (draw_contours_on_canvas, plot_curr_prev_thresh,
                    plot_duplicates, plot_thresh)
 
@@ -101,11 +101,14 @@ def prune_images_generic(
     window = 5
 
     # Step 0: compute the threshold for the first frame
-    area_th, filter_th = tune_parameters(src, resize_w, resize_h)
+    # area_th, filter_th = tune_parameters(src, resize_w, resize_h)
+    area_th = 500
+    filter_th = 3000
 
     # Step 1: Process the delta between the the first frame and the subsequent frames
     for i, img in enumerate(image_list):
         if img.endswith(".jpg") or img.endswith(".png"):
+            # if it is the first image it becomes the default frame
             if i == 0:
                 im = cv2.imread(img)
                 if type(im) == type(None):
@@ -114,17 +117,21 @@ def prune_images_generic(
                 continue
 
             search_range = min(i + window, len(image_list))
+
             for j in range(i, search_range):
                 curr_frame = cv2.imread(img)
                 if type(curr_frame) == type(None):
                     continue
+
                 curr_frame = preprocess_image(curr_frame, resize_w, resize_h)
                 score, res_cnts, thresh = compute_delta(prev_frame, curr_frame, area_th)
-                print(score)
+
+                # if the images are exactly the same, remove the image
                 if score == 0 and len(res_cnts) == 0:
                     del_idx.append(img)
                     prev_frame = curr_frame
 
+                # if the images are similar, check if the contours are the same
                 if score < filter_th:
                     del_idx.append(img)
                     prev_frame = curr_frame

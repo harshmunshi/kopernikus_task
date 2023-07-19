@@ -45,3 +45,43 @@ Fundamentally, there are some ways we can improve the data:
 * **Faster Rejection Cascades**: Remove the unwanted image comparison based on camera ID or date and time.
 * **Image Embedding Search**: Use a shallow and accurate model to generate image embeddings and cluster it using libraries like FAISS for faster rejection of similar frames without looping.
 * **Working with Parking Geomtry / Geometric Priors**: If we know the areas where cars can be parked and the areas which stay (almost) empty, we can discount the effect of illumination in those regions. While training (based on the archtitecture) these can also account for resolving class imbalance issues.
+* **Dynamic Values for thresholding**: Use histogram analysis or Otsu's method to dynamically get the thresholding values.
+
+
+# Notes to Run the Code
+
+Install poetry
+```
+$ pip install poetry
+```
+
+Navigate to the base dir and install the packages using
+```
+$ poetry install
+```
+
+Spawn a new instance / virtualenv using
+```
+$ poetry shell
+```
+
+run the main file from the base dir
+```
+$ export PYTHONPATH=.
+$ python src/main.py
+```
+
+# Additional: Some output from the debug tool
+
+```
+Top Left: Prev_frame
+Top Right: Contour Image
+Bottom Left: Next Frame
+Bottom Right: Thresh Image
+```
+
+## Similar Images
+![Alt Text](./data/curr_prev1.png)
+
+## Dissimilar Images
+![Alt Text](./data/curr_prev2.png)
