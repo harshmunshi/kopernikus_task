@@ -8,6 +8,19 @@
 * Some images are noise / nonetype.
 
 # Algorithm
+## Generic O(n^2) Algo (Slower, more accurate)
+![Alt Text](./data/ntwoalgo.png)
+The high level overview of this algorithm is as follows:
+* Read the file paths of all images in a list.
+* Sort the list based on the timestamp.
+* Take the first frame and define a window of next frames to compare with.
+* If the frame in the window is same as the previous frame, change the current frame to prev frame and analyse the next one in the window.
+* Keep a track of how many indices in the window are already evaluated.
+* If there is a mismatch, break the window loop and increment the main loop head by that index count.
+* Post the execution, run another loop to delete the files from the list.
+
+## O(n) Algo (Faster, less accurate)
+
 ![Alt Text](./data/algo_overview.png)
 
 The high-level overview of the algorithm is give in the figure above. It consists of the following steps:
@@ -16,3 +29,13 @@ The high-level overview of the algorithm is give in the figure above. It consist
 * Run a for loop to preprocess the images and compute the delta (using `compare_frames_change_detection`) and append the scores, contours and thresh images as separate lists.
 * Run a secondary for loop to compute the difference in the scores as a first pass. If the images are exactly similar, this will hit. Else, check for an acceptable range of tolerance. Also check of the mean of the images are similar, to make sure they are the same images.
 
+# Input Parameters
+![Alt text](./data/clustering_analysus.png)
+
+The idea to determine ideal input parameters depend on the following:
+* **Illumination**: In the given data, not only there is a variance in the camera angle but also intensity. This means, the frame differencing algorithm can also give false positive if the scene is exactly the same but the illumination changes.
+* **Relative Sizing**: Another core issue regarding rejection of contour is the relative size of the objects. Far away cars have smaller pixel participation, causing less frame difference pixel values.
+
+In order to counter these issues in an automated way, we use a code `tuning_research.py`, that basically works on Kmeans clustering analysis. We do clustering analysis on each contour area (in every image) and overall contour area sum. This gives use the values for `min_area` and a `cut-off` for consideration.
+
+# Data Improvements for Unique Cases

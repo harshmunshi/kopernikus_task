@@ -8,11 +8,11 @@ import cv2
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from src.imaging_interview import (
-    compare_frames_change_detection,
-    preprocess_image_change_detection,
-)
-from utils import draw_contours_on_canvas, plot_duplicates, plot_thresh
+from src.imaging_interview import (compare_frames_change_detection,
+                                   preprocess_image_change_detection)
+from src.tuning_research import tune_parameters
+from utils import (draw_contours_on_canvas, plot_curr_prev_thresh,
+                   plot_duplicates, plot_thresh)
 
 
 def load_data(src: str) -> List:
@@ -58,7 +58,9 @@ def sort_images(image_list: List[str]) -> List[str]:
     return sorted_image_list
 
 
-def compute_delta(prev_frame: NDArray, next_frame: NDArray) -> NDArray:
+def compute_delta(
+    prev_frame: NDArray, next_frame: NDArray, area_th: float = 500
+) -> NDArray:
     """A helper function to compute the delta between two frames
 
     Args:
@@ -69,7 +71,7 @@ def compute_delta(prev_frame: NDArray, next_frame: NDArray) -> NDArray:
         np.ndarray: delta between the two frames
     """
     score, res_cnts, thresh = compare_frames_change_detection(
-        prev_frame, next_frame, 500
+        prev_frame, next_frame, area_th
     )
     return score, res_cnts, thresh
 
@@ -81,7 +83,65 @@ def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> 
     return img
 
 
-def prune_images(
+def prune_images_generic(
+    src: str,
+    resize_w: int = 640,
+    resize_h: int = 480,
+    debug: bool = False,
+    score_threshold: int = 3000,
+    image_mean_threshold: int = 2,
+) -> None:
+    image_list = load_data(src)
+    image_list = sort_images(image_list)
+
+    # take the first image as the reference
+    # and compare all the reamining images for frame difference
+    prev_frame = None
+    del_idx = []
+    window = 5
+
+    # Step 0: compute the threshold for the first frame
+    area_th, filter_th = tune_parameters(src, resize_w, resize_h)
+
+    # Step 1: Process the delta between the the first frame and the subsequent frames
+    for i, img in enumerate(image_list):
+        if img.endswith(".jpg") or img.endswith(".png"):
+            if i == 0:
+                im = cv2.imread(img)
+                if type(im) == type(None):
+                    continue
+                prev_frame = preprocess_image(im, resize_w, resize_h)
+                continue
+
+            search_range = min(i + window, len(image_list))
+            for j in range(i, search_range):
+                curr_frame = cv2.imread(img)
+                if type(curr_frame) == type(None):
+                    continue
+                curr_frame = preprocess_image(curr_frame, resize_w, resize_h)
+                score, res_cnts, thresh = compute_delta(prev_frame, curr_frame, area_th)
+                print(score)
+                if score == 0 and len(res_cnts) == 0:
+                    del_idx.append(img)
+                    prev_frame = curr_frame
+
+                if score < filter_th:
+                    del_idx.append(img)
+                    prev_frame = curr_frame
+
+                else:
+                    i += j
+                    prev_frame = curr_frame
+                    break
+
+        else:
+            continue
+    for im_del in del_idx:
+        os.remove(im_del)
+        print(f"removed {im_del}")
+
+
+def prune_images_On(
     src: str,
     resize_w: int = 640,
     resize_h: int = 480,
