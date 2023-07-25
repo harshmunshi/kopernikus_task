@@ -12,7 +12,7 @@ from src.io_util import load_data, preprocess_image, sort_images
 from src.utils import draw_contours_on_canvas, plot_thresh
 
 
-def compare_frames_change_detection(prev_frame, next_frame, min_contour_area):
+def compare_frames_change_detection_mod(prev_frame, next_frame, min_contour_area):
     frame_delta = cv2.absdiff(prev_frame, next_frame)
     thresh = cv2.threshold(frame_delta, 45, 255, cv2.THRESH_BINARY)[1]
 
@@ -59,7 +59,7 @@ def tune_parameters(src: str, resize_w: int = 640, resize_h: int = 480) -> List:
                 if type(curr_frame) == type(None):
                     continue
                 curr_frame = preprocess_image(curr_frame, resize_w, resize_h)
-                score, res_cnts, thresh = compare_frames_change_detection(
+                score, res_cnts, thresh = compare_frames_change_detection_mod(
                     prev_frame, curr_frame, 500
                 )
                 scores.append(score)
@@ -77,6 +77,3 @@ def tune_parameters(src: str, resize_w: int = 640, resize_h: int = 480) -> List:
     min_threshold = min(kmeans_carea.cluster_centers_)
 
     return min_threshold, max_threshold * 0.05
-
-
-tune_parameters("/home/harsh/Downloads/dataset-2")

@@ -1,10 +1,20 @@
 from datetime import datetime
 from glob import glob
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import cv2
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
+
+from src.imaging_interview import preprocess_image_change_detection
+
+
+def check_in_map(hashmap: Dict, camera_id: Union[str, int]) -> bool:
+    try:
+        if hashmap[camera_id]:
+            return True
+    except:
+        return False
 
 
 def preprocess_image(img: NDArray, resize_w: int = 640, resize_h: int = 480) -> NDArray:

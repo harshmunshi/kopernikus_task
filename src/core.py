@@ -12,8 +12,9 @@ from src.imaging_interview import (
     compare_frames_change_detection,
     preprocess_image_change_detection,
 )
-from src.io_util import load_data, preprocess_image, sort_images
-from src.tuning_research import tune_parameters
+from src.io_util import check_in_map, load_data, preprocess_image, sort_images
+
+# from src.tuning_research import tune_parameters
 from utils import (
     draw_contours_on_canvas,
     plot_curr_prev_thresh,
@@ -126,54 +127,59 @@ def prune_images_On(
     # take the first image as the reference
     # and compare all the reamining images for frame difference
     prev_frame = None
-    scores = []
-    contours = []
-    thresh_all = []
+    difference_list = []
+    del_idx = []
+    base_map = {}
 
-    # Step 1: Process the delta between the the first frame and the subsequent frames
+    # loop over all frames and check for the camera ID if encountered for the first time
     for i, img in enumerate(image_list):
-        if img.endswith(".jpg") or img.endswith(".png"):
-            print(img)
-            if i == 0:
-                im = cv2.imread(img)
-                if type(im) == type(None):
-                    continue
-                prev_frame = preprocess_image(im, resize_w, resize_h)
-                continue
+        # for the first image, directly add it to the map
+        if i == 0:
+            camera_id = img.split("/")[-1].split(".")[0][:3]
             im = cv2.imread(img)
             if type(im) == type(None):
                 continue
-            next_frame = preprocess_image(im, resize_w, resize_h)
-            score, res_cnts, thresh = compute_delta(prev_frame, next_frame)
-            contours.append(res_cnts)
-            thresh_all.append(thresh)
-            scores.append(score)
+            prev_frame = preprocess_image(im, resize_w, resize_h)
+            # add this frame to the hash map
+
+            base_map[camera_id] = {}
+            base_map[camera_id]["frame"] = prev_frame
+            base_map[camera_id]["d_list"] = []
+            continue
+
+        # for the next frames keep computing the difference
+        camera_id = img.split("/")[-1].split(".")[0][:3]
+        im = cv2.imread(img)
+        if type(im) == type(None):
+            continue
+        next_frame = preprocess_image(im, resize_w, resize_h)
+
+        # if this camera ID is not in map, add it to the map
+        if not camera_id in base_map:
+            # if the camera ID is not present, add it to the map
+            base_map[camera_id] = {}
+            base_map[camera_id]["frame"] = next_frame
+            base_map[camera_id]["d_list"] = []
+            continue
         else:
-            continue
+            print(f"Checking {i} and {i-1} frames")
+            # compute the difference
+            base_frame = base_map[camera_id]["frame"]
+            score, res_cnts, thresh = compute_delta(base_frame, next_frame, 500)
 
-    # Step 2: Run a secondary loop to check the duplicates based on the delta and remove the duplicates
-    for i in range(len(scores)):
-        if i == 0:
-            continue
-        if scores[i] == scores[i - 1]:
-            duplicates = True
-            os.remove(image_list[i + 1])
-            print(f"removed {image_list[i+1]}")
+            # check if there are entries already in diff list
+            if len(base_map[camera_id]["d_list"]) > 0:
+                # conditions for termination
+                # check if scores are same
+                if base_map[camera_id]["d_list"][-1] == score:
+                    del_idx.append(img)
+                elif abs(base_map[camera_id]["d_list"][-1] - score) < 3000:
+                    del_idx.append(img)
 
-        elif abs(scores[i] - scores[i - 1]) < score_threshold:
-            # check if the contours are the same
-            if len(contours[i]) == len(contours[i - 1]):
-                # check if the images are the same
-                try:
-                    if np.allclose(
-                        np.mean(cv2.imread(image_list[i + 1])),
-                        np.mean(cv2.imread(image_list[i])),
-                        atol=image_mean_threshold,
-                    ):
-                        os.remove(image_list[i + 1])
-                        print(f"removed {image_list[i+1]}")
-                except:
-                    continue
+            # add the score to the difference list
+            base_map[camera_id]["d_list"].append(score)
+            # difference_list.append(score)
+    print(len(del_idx))
 
 
 if __name__ == "__main__":
