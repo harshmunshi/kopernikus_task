@@ -24,6 +24,8 @@ The high level overview of this algorithm is as follows:
 
 ![Alt Text](./data/algo_overview.png)
 
+![Alt Text](./data/onmethod.png)
+
 The high-level overview of the algorithm is give in the figure above. It consists of the following steps:
 * Read the file paths of all the images in a list.
 * Sort the list based on the timestamp. This is necessary since images around the same timestamp have higher likelihood to be similar.
