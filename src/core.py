@@ -145,6 +145,7 @@ def prune_images_On(
             base_map[camera_id] = {}
             base_map[camera_id]["frame"] = prev_frame
             base_map[camera_id]["d_list"] = []
+            base_map[camera_id]["del_list"] = []
             continue
 
         # for the next frames keep computing the difference
@@ -160,6 +161,7 @@ def prune_images_On(
             base_map[camera_id] = {}
             base_map[camera_id]["frame"] = next_frame
             base_map[camera_id]["d_list"] = []
+            base_map[camera_id]["del_list"] = []
             continue
         else:
             print(f"Checking {i} and {i-1} frames")
@@ -172,13 +174,14 @@ def prune_images_On(
                 # conditions for termination
                 # check if scores are same
                 if base_map[camera_id]["d_list"][-1] == score:
+                    base_map[camera_id]["del_list"].append(next_frame)
                     del_idx.append(img)
-                elif abs(base_map[camera_id]["d_list"][-1] - score) < 3000:
+                elif abs(base_map[camera_id]["d_list"][-1] - score) < 500:
+                    base_map[camera_id]["del_list"].append(next_frame)
                     del_idx.append(img)
 
             # add the score to the difference list
             base_map[camera_id]["d_list"].append(score)
-            # difference_list.append(score)
     print(len(del_idx))
 
 
